@@ -1,33 +1,44 @@
-import logging
+import asyncio
 import json
-import os
-from aiogram import Bot, Dispatcher, types
-from aiogram.utils import executor
+import logging
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.filters import Command
 
-# Tokenni xavfsizlik uchun shu yerga yozamiz
+# Token va URL
 API_TOKEN = '8666718768:AAGy49HBI-iMhBBM5YVQ5E1k2ruhS22dZU8'
 WEB_APP_URL = "https://begimqulov017.github.io/telegram-bot/"
 
 logging.basicConfig(level=logging.INFO)
 
 bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher()
 
-@dp.message_handler(commands=['start'])
-async def send_welcome(message: types.Message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add(types.KeyboardButton("Menyuni ochish 🍕", web_app=types.WebAppInfo(url=WEB_APP_URL)))
-    
-    await message.answer(f"Xush kelibsiz, {message.from_user.first_name}!\nBuyurtma berish uchun tugmani bosing.", reply_markup=markup)
+@dp.message(Command("start"))
+async def cmd_start(message: types.Message):
+    markup = types.ReplyKeyboardMarkup(
+        keyboard=[
+            [types.KeyboardButton(text="Menyuni ochish 🍕", web_app=types.WebAppInfo(url=WEB_APP_URL))]
+        ],
+        resize_keyboard=True
+    )
+    await message.answer(f"Xush kelibsiz, {message.from_user.first_name}!\nPastdagi tugma orqali menyuni oching.", reply_markup=markup)
 
-@dp.message_handler(content_types=['web_app_data'])
-async def get_data(message: types.Message):
+@dp.message(F.content_type == "web_app_data")
+async def web_app_data_handler(message: types.Message):
     data = json.loads(message.web_app_data.data)
     
-    items = "\n".join([f"✅ {i['name']} - {i['price']} so'm" for i in data['items']])
-    text = f"🔔 Yangi buyurtma!\n\n{items}\n\n💰 Jami: {data['total']} so'm"
+    items_list = ""
+    for item in data['items']:
+        items_list += f"✅ {item['name']} — {item['price']:,} so'm\n"
     
-    await message.answer(text)
+    res = (f"🔔 **Yangi buyurtma!**\n\n"
+           f"{items_list}\n"
+           f"💰 **Jami:** {data['total']:,} so'm")
+    
+    await message.answer(res, parse_mode="Markdown")
 
-if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+async def main():
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
