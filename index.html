@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restoran Menu</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f4; padding: 20px; }
+        .item { background: white; padding: 15px; margin-bottom: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+        button { background: #31b545; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+        .cart-btn { background: #248bfe; width: 100%; margin-top: 20px; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <h2>Bizning Menyu</h2>
+    <div id="menu">
+        <div class="item"><span>Pitsa (35 000 so'm)</span> <button onclick="addToCart('Pitsa', 35000)">Qo'shish</button></div>
+        <div class="item"><span>Gamburger (22 000 so'm)</span> <button onclick="addToCart('Gamburger', 22000)">Qo'shish</button></div>
+        <div class="item"><span>Lavash (25 000 so'm)</span> <button onclick="addToCart('Lavash', 25000)">Qo'shish</button></div>
+    </div>
+    <button class="cart-btn" id="mainButton" style="display: none;" onclick="sendOrder()">Buyurtma berish</button>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        let cart = [];
+        tg.expand();
+
+        function addToCart(name, price) {
+            cart.push({name, price});
+            document.getElementById('mainButton').style.display = 'block';
+            document.getElementById('mainButton').innerText = `Savatda ${cart.length} ta mahsulot`;
+        }
+
+        function sendOrder() {
+            let data = {
+                items: cart,
+                total: cart.reduce((a, b) => a + b.price, 0)
+            };
+            tg.sendData(JSON.stringify(data)); // Botga ma'lumotni yuborish
+            tg.close();
+        }
+    </script>
+</body>
+</html>
